@@ -1,0 +1,64 @@
+Device Documentation
+
+Hardware Overview
+
+Camera
+Type: PiCamera
+Resolution: 912x608
+Framerate: 30 fps
+Display
+Type: Not applicable
+Resolution: Not applicable
+
+Audio
+Speakers: Built-in (if applicable)
+Audio Output: 3.5mm jack (if applicable)
+
+Controls
+Buttons: Scan Text, Import File, About
+Toggle: Text to Speech Engine (gTTS or pyttsx3)
+
+Software Overview
+Operating System
+Raspberry Pi OS
+
+Libraries and Modules
+OpenCV
+pytesseract
+picamera
+os, sys
+pyttsx3
+gtts
+numpy
+PySimpleGUI
+pathlib
+PIL
+pygame.mixer
+
+Functionality
+Scan Text
+Utilizes the PiCamera to capture images
+Implements grid mapping for visual assistance
+Performs OCR (Optical Character Recognition) using pytesseract
+Displays the captured image with grid overlay
+Allows the user to capture text by pressing the "c" key
+Reads the captured text using either gTTS or pyttsx3 based on user preference
+
+Import File
+Accepts input files (txt, png, jpg)
+For image files (png, jpg):
+Applies thresholding and image filtering
+Utilizes pytesseract for OCR
+Reads the text using gTTS or pyttsx3 based on user preference
+For text files (txt):
+Reads the text content
+Reads the text using gTTS or pyttsx3 based on user preference
+
+About
+Provides information about the application and developers
+Displays acknowledgments and credits
+Text to Speech Engine
+Allows the user to toggle between gTTS and pyttsx3
+
+Default: pyttsx3 (offline text-to-speech library)
+Displays a note about the default usage
