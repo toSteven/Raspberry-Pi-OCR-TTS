@@ -1,4 +1,4 @@
-# libraries
+# Import necessary libraries
 import cv2
 import pytesseract
 from picamera.array import PiRGBArray
@@ -12,47 +12,52 @@ import PySimpleGUI as sg
 from pathlib import Path
 from PIL import Image
 from os import environ
+
+# Hide Pygame support prompt
 environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 from pygame import mixer
 
 
-# tts for gtts or pyttsx3 config set
+# Function to choose text-to-speech (TTS) engine and read the given text
 def ttsChoice(filename, text, gttsOn):
     layout = [
         [sg.Multiline(text, size=(80, 25))],
     ]
     win = sg.Window(filename, layout, modal=True, finalize=True)
 
-    # gtts config
+    # User choice as gTTS
     if gttsOn:
         print(text)
-        tts = gTTS(text)
-        tts.save("text.mp3")  # saving the scanned txt
+        tts = gTTS(text) # Scan the text using gTTS
+        tts.save("text.mp3")  # Save the scanned text as an MP3 file
 
-        # use mixer from pygame for reading
-        mixer.init()
-        mixer.music.load("text.mp3") # saving the scanned txt
-        mixer.music.play()
+        # Use Pygame's mixer for reading
+        mixer.init() # Initialize mixer
+        mixer.music.load("text.mp3") # Load the MP3 file
+        mixer.music.play() # Play audio
 
-    # pyttsx3 config
+    # User choice as pyttsx3
     else:
         print(text)
-        engine = pyttsx3.init()
-        engine.setProperty('rate', 125)
-        engine.setProperty('voice', 'en-westindies')
-        engine.say(text)
-        engine.runAndWait()
+        engine = pyttsx3.init() # Initialize pyttsx3
+        engine.setProperty('rate', 125) # Configure  rate
+        engine.setProperty('voice', 'en-westindies') # Configure voice
+        engine.say(text) # Convert into Speech
+        engine.runAndWait() # wait while the TTS engine processes and speaks the text
 
+    # Hanlde event
     while True:
         event, values = win.read()
 
+        # Handle exit event
         if event == sg.WINDOW_CLOSED:
             break
 
     win.close()
 
-# for input files png, jpeg or txt file
+# Function to import files (png, jpeg, or txt)
 def importFiles(gttsOn):
+    # Layout configuration
     layout = [
         [sg.Input(key='-INPUT-'),
          sg.FileBrowse(file_types=(("TXT Files", "*.txt"), ("PNG Files", "*.png*"), ("JPG Files", "*.jpg*")))],
@@ -63,50 +68,52 @@ def importFiles(gttsOn):
 
     choice = None
     while True:
+        # Handle event
         event, values = window.read()
 
-        # config for exit
+        # Hanlde exit event
         if event == "Exit" or event == sg.WIN_CLOSED:
             window.close()
             main()
 
-        # config for input
+        # Handle process
         elif event == 'Process Text/Image File':
             filename = values['-INPUT-']
 
-            # config if input is png or jpeg
+            # Config if input is png or jpeg
             if ".png" in filename or ".jpg" in filename:
                 imgUMat = cv2.imread(filename)
 
-                # threshold
+                # Threshold
                 gray = cv2.cvtColor(imgUMat, cv2.COLOR_BGR2GRAY)
                 _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
-                # image filter via gray scale
+                # Image filter via grayscale
                 kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 1))
                 eroded = cv2.erode(thresh, kernel, iterations=2)
                 dilated = cv2.dilate(eroded, kernel, iterations=2)
 
-                # ocr config
+                # OCR configuration
                 config = ('-l eng --oem 3--psm 3 ')
                 text = pytesseract.image_to_string(dilated, config=config)
 
-                # call for ttsChoice
+                # Call for ttsChoice
                 ttsChoice(filename, text, gttsOn)
 
-            # config for text file
+            # Config for text file
             elif Path(filename).is_file():
                 try:
                     with open(filename, "rt", encoding='utf-8') as f:
                         text = f.read()
-                    # call for ttsChoice
+                    # Call for ttsChoice
                     ttsChoice(filename, text, gttsOn)
                 except Exception as e:
                     print("Error: ", e)
     window.close()
 
-
+# Function to display information about the application and developers
 def aboutWindow():
+    # Layout configuration
     layout = [
         [sg.Text('About the Application:', size=(20, 1), justification='left', font='Helvetica 15 bold')],
         [sg.Text('This application is yes', size=(45, 1), justification='left', font='Calibri 10')],
@@ -120,15 +127,19 @@ def aboutWindow():
     window = sg.Window("About", layout, element_justification='l', modal=True)
 
     while True:
+        # Handle event
         event, values = window.read()
+
+        # Handle exit event
         if event == "Exit" or event == sg.WIN_CLOSED:
             window.close()
             main()
 
     window.close()
 
-
+# Function to display the main menu
 def main():
+    # Layout configuration
     sg.theme('BluePurple')
 
     layout = [
@@ -157,7 +168,7 @@ def main():
     engine.setProperty('rate', 125)
     engine.setProperty('voice', 'en-westindies')
 
-    # grid config
+    # Grid config
     num_rows = 9
     num_cols = 16
     font = cv2.FONT_HERSHEY_SIMPLEX
@@ -166,60 +177,61 @@ def main():
     text_color = (255, 0, 0)
     text_position = (228, 510)
 
-    # txt on screen config
+    # txt config on screen 
     textOnImage = 'Press "c" to capture image'
     textOnImage2 = 'Press "q" to close capture window'
 
-    # ocr config
+    # OCR config
     config = ('-l eng --oem 3--psm 3 ')
 
-    # algo config
+    # variable initialization
     down = graphic_off = True
     openWindow = False
     gttsOn = False
 
+    # Handle event
     while True:
         event, values = window.read(timeout=20)
 
-        # call for exit
+        # event for exit
         if event == 'Exit' or event == sg.WIN_CLOSED:
             sys.exit()
 
-        # flag for  camera scan
+        # event for  camera scan
         elif event == 'Scan Text':
             openWindow = True
 
-        # call for import files
+        # event for import files
         elif event == 'Import File':
             window.close()
             importFiles(gttsOn)
 
-        # call for toggles the tts config
+        # event for toggles the tts config
         elif event == '-TOGGLE-GRAPHIC-':
             graphic_off = not graphic_off
             window['-TOGGLE-GRAPHIC-'].update(image_data=toggle_btn_off if graphic_off else toggle_btn_on)
             gttsOn = True
 
-        # call for about
+        # event for about
         elif event == 'About':
             window.close()
             aboutWindow()
 
-        # continue for cam scan
+        # Handle camera scan
         if openWindow:
             window.close()
 
-            # picam config
+            # PiCam initialization
             camera = PiCamera()
             camera.resolution = (912, 608)
             camera.framerate = 30
             rawCapture = PiRGBArray(camera, size=(912, 608))
 
-            # Picam set config
+            # PiCam config
             for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
                 image = frame.array
 
-                # grid mapping
+                # Grid mapping
                 grid_img = np.copy(image)
                 height, width, _ = grid_img.shape
                 row_step = int(height / num_rows)
@@ -235,7 +247,7 @@ def main():
                 cv2.putText(grid_img, textOnImage, text_position, font, font_scale, text_color, thickness)
                 cv2.putText(grid_img, textOnImage2, (170, 570), font, font_scale, text_color, thickness)
 
-                # frame config
+                # Frame config
                 winname = "Capture Text"
                 cv2.namedWindow(winname)
                 cv2.moveWindow(winname, 100, 0)
@@ -246,11 +258,11 @@ def main():
                 # key config
                 key = cv2.waitKey(1) & 0xff
 
-                # threshold
+                # Threshold
                 gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
                 _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
-                # image filter via gray scale
+                # Image filter via gray scale
                 kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 1))
                 eroded = cv2.erode(thresh, kernel, iterations=2)
                 dilated = cv2.dilate(eroded, kernel, iterations=2)
